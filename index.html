@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ShipZip</title>
+<meta name="description" content="Turn a website zip into a live GitHub Pages site on your own domain.">
+<meta name="theme-color" content="#0f172a">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<style>
+  :root {
+    --bg: #f4f5f7; --card: #ffffff; --text: #14171f; --muted: #636b7a; --line: #dfe2e8;
+    --accent: #1f6feb; --accent-text: #ffffff; --ok: #15803d; --warn: #a16207; --err: #b42318;
+    --ok-bg: #e8f6ec; --warn-bg: #fdf5e1; --err-bg: #fdecea; --code-bg: #eef0f4;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0b0f17; --card: #141a24; --text: #e6e9ef; --muted: #98a1b2; --line: #263042;
+      --accent: #4c8dff; --accent-text: #08101f; --ok: #4ade80; --warn: #facc15; --err: #f87171;
+      --ok-bg: #0f2a1a; --warn-bg: #2a230b; --err-bg: #2c1212; --code-bg: #1b2331;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0b0f17; --card: #141a24; --text: #e6e9ef; --muted: #98a1b2; --line: #263042;
+    --accent: #4c8dff; --accent-text: #08101f; --ok: #4ade80; --warn: #facc15; --err: #f87171;
+    --ok-bg: #0f2a1a; --warn-bg: #2a230b; --err-bg: #2c1212; --code-bg: #1b2331;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--text); }
+  body { font: 16px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; padding: 0 16px calc(32px + env(safe-area-inset-bottom)); }
+  main { max-width: 560px; margin: 0 auto; }
+  header { display: flex; align-items: center; gap: 12px; padding: 20px 0 8px; }
+  header img { width: 40px; height: 40px; border-radius: 10px; }
+  header h1 { font-size: 22px; margin: 0; letter-spacing: -0.01em; }
+  header p { margin: 0; color: var(--muted); font-size: 14px; }
+  section { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 16px; margin: 14px 0; }
+  section.locked { opacity: .45; pointer-events: none; }
+  section.hidden { display: none; }
+  h2 { font-size: 17px; margin: 0 0 10px; display: flex; align-items: center; gap: 8px; }
+  h2 .n { display: inline-grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: var(--accent); color: var(--accent-text); font-size: 13px; }
+  h4 { margin: 12px 0 4px; font-size: 14px; }
+  label { display: block; font-size: 14px; font-weight: 600; margin: 12px 0 4px; }
+  label .opt { font-weight: 400; color: var(--muted); }
+  input[type=text], input[type=password], input[type=url] {
+    width: 100%; font: inherit; padding: 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--bg); color: var(--text);
+  }
+  button, .filepick {
+    font: inherit; font-weight: 600; border: 1px solid var(--line); background: var(--bg); color: var(--text);
+    padding: 12px 16px; border-radius: 10px; cursor: pointer; min-height: 48px;
+  }
+  button.primary { background: var(--accent); color: var(--accent-text); border-color: transparent; width: 100%; margin-top: 12px; }
+  button:disabled { opacity: .5; cursor: default; }
+  .row { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+  .row > * { flex: 1; }
+  .filepick { display: block; text-align: center; border-style: dashed; border-width: 2px; padding: 22px 12px; color: var(--accent); }
+  .filepick input { display: none; }
+  .pill { white-space: nowrap; font-size: 12px; font-weight: 600; padding: 3px 9px; border-radius: 999px; background: var(--code-bg); color: var(--muted); margin-left: auto; }
+  .pill.ok { background: var(--ok-bg); color: var(--ok); }
+  details { margin-top: 10px; }
+  summary { cursor: pointer; color: var(--accent); font-size: 14px; font-weight: 600; padding: 6px 0; }
+  details ol, details ul { padding-left: 20px; margin: 6px 0; font-size: 14px; }
+  details li { margin: 4px 0; }
+  .muted { color: var(--muted); font-size: 13px; }
+  p.note, p.warn, p.err, p.ok, p.summary { font-size: 14px; margin: 8px 0; padding: 8px 10px; border-radius: 8px; }
+  p.summary { padding: 0; }
+  p.note { background: var(--code-bg); }
+  p.warn { background: var(--warn-bg); color: var(--warn); }
+  p.err { background: var(--err-bg); color: var(--err); }
+  p.ok { background: var(--ok-bg); color: var(--ok); }
+  #setup-done { display: none; }
+  body.setup-collapsed #setup-done { display: block; }
+  body.setup-collapsed #step-gh, body.setup-collapsed #step-site { display: none; }
+  #setup-done dl { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; margin: 0; font-size: 14px; }
+  #setup-done dt { color: var(--muted); }
+  #setup-done dd { margin: 0; overflow-wrap: anywhere; }
+  ul.files { max-height: 220px; overflow: auto; font: 12px/1.6 ui-monospace, Menlo, Consolas, monospace; padding-left: 16px; overflow-wrap: anywhere; }
+  progress { width: 100%; height: 10px; margin-top: 10px; accent-color: var(--accent); }
+  #site-link { margin-top: 12px; font-size: 14px; overflow-wrap: anywhere; }
+  #site-link a { color: var(--accent); font-weight: 600; }
+  table.records { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 8px; }
+  table.records th, table.records td { text-align: left; padding: 6px 4px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+  .mono { font-family: ui-monospace, Menlo, Consolas, monospace; overflow-wrap: anywhere; }
+  button.copy { min-height: 34px; padding: 4px 10px; font-size: 12px; }
+  ul.rec { font: 12px/1.7 ui-monospace, Menlo, Consolas, monospace; padding-left: 18px; overflow-wrap: anywhere; }
+  ul.rec.del li { color: var(--err); }
+  ul.rec.add li { color: var(--ok); }
+  ul.checks { list-style: none; padding: 0; margin: 8px 0 0; }
+  ul.checks li { display: grid; grid-template-columns: 22px 1fr; gap: 2px 8px; padding: 8px 0; border-bottom: 1px solid var(--line); font-size: 14px; }
+  ul.checks li::before { content: "○"; color: var(--muted); grid-row: span 2; font-weight: 700; }
+  ul.checks li.ok::before { content: "✓"; color: var(--ok); }
+  ul.checks li.wait::before { content: "…"; color: var(--warn); }
+  ul.checks li.bad::before { content: "✕"; color: var(--err); }
+  ul.checks .detail { color: var(--muted); font-size: 13px; grid-column: 2; }
+  #log { list-style: none; padding: 0; margin: 0; font: 12px/1.6 ui-monospace, Menlo, Consolas, monospace; max-height: 260px; overflow: auto; overflow-wrap: anywhere; }
+  #log li.ok { color: var(--ok); } #log li.err { color: var(--err); } #log li.warn { color: var(--warn); }
+  #toast { position: fixed; left: 16px; right: 16px; bottom: calc(16px + env(safe-area-inset-bottom)); max-width: 528px; margin: 0 auto; background: var(--text); color: var(--bg);
+    padding: 12px 14px; border-radius: 10px; font-size: 14px; transform: translateY(150%); transition: transform .2s; z-index: 10; }
+  #toast.show { transform: none; }
+  #toast.err { background: var(--err); color: #fff; }
+  #toast.ok { background: var(--ok); color: #04110a; }
+  a { color: var(--accent); }
+  code { background: var(--code-bg); padding: 1px 5px; border-radius: 5px; font-size: 13px; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <img src="icons/icon-192.png" alt="">
+    <div>
+      <h1>ShipZip</h1>
+      <p>Zip in, website out.</p>
+    </div>
+  </header>
+
+  <section id="setup-done">
+    <h2>Setup <button id="setup-edit" type="button" class="copy" style="margin-left:auto">Edit</button></h2>
+    <dl>
+      <dt>GitHub</dt><dd id="sum-user"></dd>
+      <dt>Site</dt><dd id="sum-repo"></dd>
+      <dt>Domain</dt><dd id="sum-domain"></dd>
+      <dt>IONOS key</dt><dd id="sum-ionos"></dd>
+    </dl>
+  </section>
+
+  <section id="step-gh">
+    <h2><span class="n">1</span> Connect GitHub <span id="gh-status" class="pill">Not connected</span></h2>
+    <label for="gh-token">GitHub token</label>
+    <input id="gh-token" type="password" autocomplete="off" spellcheck="false" placeholder="github_pat_…">
+    <button id="gh-connect" class="primary" type="button">Connect</button>
+    <details>
+      <summary>How do I get a token?</summary>
+      <ol>
+        <li>Open <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">GitHub → new fine-grained token</a>.</li>
+        <li>Name it <code>ShipZip</code> and pick an expiration.</li>
+        <li>Repository access: <strong>All repositories</strong> (so ShipZip can make new site repos).</li>
+        <li>Under <strong>Repository permissions</strong> set to <strong>Read and write</strong>: <code>Administration</code>, <code>Contents</code>, <code>Pages</code>.</li>
+        <li>Generate, copy, and paste it above.</li>
+      </ol>
+      <p class="muted">The token is stored only on this phone and sent only to GitHub.</p>
+    </details>
+  </section>
+
+  <section id="step-site" class="locked">
+    <h2><span class="n">2</span> Your site</h2>
+    <label for="domain">Your domain <span class="opt">(optional)</span></label>
+    <input id="domain" type="text" inputmode="url" autocapitalize="off" spellcheck="false" placeholder="example.com">
+    <label for="repo">Site name on GitHub</label>
+    <input id="repo" type="text" list="repo-list" autocapitalize="off" spellcheck="false" placeholder="my-site">
+    <datalist id="repo-list"></datalist>
+    <p class="muted">A new repository with this name is created on the first deploy. Pick an existing one to update it instead.</p>
+    <label for="ionos-key">IONOS API key <span class="opt">(lets ShipZip set up the domain for you)</span></label>
+    <input id="ionos-key" type="password" autocomplete="off" spellcheck="false" placeholder="prefix.secret">
+    <details>
+      <summary>How do I get an IONOS API key?</summary>
+      <ol>
+        <li>Log in to IONOS and open the <strong>Developer API</strong> / <strong>API Access</strong> section.</li>
+        <li>Tap <strong>Create new key</strong>, give it a name.</li>
+        <li>Copy the <strong>public prefix</strong> and the <strong>secret</strong>, and paste them here as <code>prefix.secret</code> (with a dot between).</li>
+      </ol>
+      <p class="muted">This key can change every DNS record on the account. It stays on this phone and is sent only to IONOS.</p>
+      <label for="ionos-base">IONOS API address <span class="opt">(advanced — only if using the proxy from the README)</span></label>
+      <input id="ionos-base" type="url" autocapitalize="off" spellcheck="false" placeholder="https://api.hosting.ionos.com/dns/v1">
+    </details>
+    <button id="site-save" class="primary" type="button">Save</button>
+  </section>
+
+  <section id="step-deploy" class="locked">
+    <h2><span class="n">3</span> Deploy</h2>
+    <label class="filepick">
+      Choose the website .zip
+      <input id="zip" type="file" accept=".zip,application/zip,application/x-zip-compressed">
+    </label>
+    <p class="muted">Tip: install ShipZip to the home screen, then use <strong>Share → ShipZip</strong> on any zip.</p>
+    <div id="report"></div>
+    <progress id="progress" hidden></progress>
+    <button id="deploy-btn" class="primary" type="button" disabled>Deploy</button>
+    <div id="site-link"></div>
+  </section>
+
+  <section id="step-domain" class="hidden">
+    <h2><span class="n">4</span> Connect the domain</h2>
+    <p class="muted">Deploy once first. Then ShipZip shows exactly what it will change in IONOS and waits for your OK.</p>
+    <button id="dns-check" type="button" class="primary">Check IONOS</button>
+    <div id="dns-plan"></div>
+    <details id="manual">
+      <summary>Do it by hand instead</summary>
+      <p class="muted">In IONOS: Domains &amp; SSL → your domain → DNS. Delete any existing A, AAAA or CNAME records on <code>@</code> and <code>www</code>, then add these:</p>
+      <div id="manual-records"></div>
+    </details>
+    <h4>Status</h4>
+    <ul class="checks">
+      <li id="chk-pages"><span>Site published on GitHub</span><span class="detail"></span></li>
+      <li id="chk-claim"><span>Domain claimed on GitHub</span><span class="detail"></span></li>
+      <li id="chk-apex"><span>Domain points to GitHub</span><span class="detail"></span></li>
+      <li id="chk-www"><span>www points to GitHub</span><span class="detail"></span></li>
+      <li id="chk-https"><span>HTTPS (padlock)</span><span class="detail"></span></li>
+    </ul>
+    <button id="status-check" type="button" class="primary">Check now</button>
+    <details>
+      <summary>Recommended: verify the domain with GitHub</summary>
+      <ol>
+        <li>On GitHub open <a href="https://github.com/settings/pages" target="_blank" rel="noopener">Settings → Pages</a> and tap <strong>Add a domain</strong>.</li>
+        <li>Enter the domain. GitHub shows a TXT record — copy its <strong>value</strong>.</li>
+        <li>Paste it below and tap Add. Then go back and tap <strong>Verify</strong> on GitHub.</li>
+      </ol>
+      <input id="verify-value" type="text" autocapitalize="off" spellcheck="false" placeholder="TXT value from GitHub">
+      <button id="verify-add" type="button" class="primary">Add TXT record in IONOS</button>
+      <p class="muted">Verifying stops anyone else from ever hosting a GitHub site on your domain.</p>
+    </details>
+  </section>
+
+  <section>
+    <h2>Activity</h2>
+    <ul id="log"></ul>
+    <div class="row"><button id="forget" type="button">Remove saved keys from this phone</button></div>
+  </section>
+</main>
+<div id="toast" role="status" aria-live="polite"></div>
+<script src="vendor/jszip.min.js"></script>
+<script src="core.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
