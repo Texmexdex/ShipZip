@@ -8,36 +8,6 @@ No server, no build step, no tracking. Everything runs in the phone's browser;
 the GitHub token and IONOS key are stored only on that phone (browser storage for
 the app's own address) and are only ever sent to GitHub and IONOS.
 
-## 1. Host ShipZip once (Drew)
-
-ShipZip is itself a static site. Put this folder on any HTTPS host, e.g. GitHub Pages:
-
-1. Create a public repo (e.g. `shipzip`) and upload everything in this folder
-   (keep `extras/` out if you like — the app doesn't need it).
-2. Repo → Settings → Pages → Source: **Deploy from a branch**, `main`, `/ (root)`.
-3. It will be live at `https://<you>.github.io/shipzip/`.
-
-It must be served over HTTPS (GitHub Pages is), otherwise Android won't install it.
-
-## 2. Install on the phone (your friend)
-
-1. Open the ShipZip address in **Chrome** on Android.
-2. Chrome menu (⋮) → **Install app** (or *Add to Home screen*).
-3. Open ShipZip from the home screen and do the setup:
-   - **GitHub token** — the app explains how. Fine-grained token, *All repositories*,
-     Repository permissions **Administration**, **Contents**, **Pages** set to *Read and write*.
-   - **Site name** and **domain** (domain optional).
-   - **IONOS API key** (optional) — `prefix.secret` from IONOS → Developer API / API Access.
-
-## 3. Use it
-
-- In the vibe-coding app, share the output zip → pick **ShipZip** in the share sheet
-  (works once ShipZip is installed), or open ShipZip and tap *Choose the website .zip*.
-- Check the report, tap **Deploy**. GitHub usually publishes within a minute.
-- First time with a domain: tap **Check IONOS**, read what it will change, tap
-  **Apply**. The status list ticks itself off as DNS spreads and HTTPS turns on.
-- Every later deploy: share zip → Deploy. That's it.
-
 ## What it does with the zip
 
 - Unwraps a single top-level folder so `index.html` sits at the root.
