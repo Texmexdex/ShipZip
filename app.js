@@ -569,6 +569,29 @@
     } catch (e) { log('Could not read the shared file: ' + e.message, 'err'); }
   }
 
+  // ---------- platform (iPhone vs Android) ----------
+  const IS_IOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  const IS_ANDROID = /Android/i.test(navigator.userAgent);
+  const STANDALONE = (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true;
+
+  function setupPlatform() {
+    const tip = $('#zip-tip');
+    if (IS_IOS) {
+      tip.innerHTML = 'On iPhone: in the app that made the zip, tap <strong>Share → Save to Files</strong>. Then tap the button above and pick it from Files (usually in <strong>Downloads</strong> or <strong>Recents</strong>).';
+      let skipped = false;
+      try { skipped = sessionStorage.getItem('shipzip.installSkip') === '1'; } catch (e) {}
+      if (!STANDALONE && !skipped) $('#install').hidden = false;
+      $('#install-skip').addEventListener('click', () => {
+        try { sessionStorage.setItem('shipzip.installSkip', '1'); } catch (e) {}
+        $('#install').hidden = true;
+      });
+    } else if (IS_ANDROID) {
+      tip.innerHTML = 'Tip: install ShipZip from Chrome\'s menu (⋮ → Install app), then use <strong>Share → ShipZip</strong> on any zip.';
+    } else {
+      tip.textContent = 'You can also drag the zip onto this button.';
+    }
+  }
+
   // ---------- wiring ----------
   function forget() {
     if (!confirm('Remove the saved GitHub token, IONOS key and settings from this phone?')) return;
@@ -589,6 +612,10 @@
     $('#domain').addEventListener('input', e => {
       if (!$('#repo').value.trim()) $('#repo').placeholder = C.suggestRepoName(e.target.value);
     });
+    const pick = $('.filepick');
+    pick.addEventListener('dragover', e => e.preventDefault());
+    pick.addEventListener('drop', e => { e.preventDefault(); const f = e.dataTransfer.files[0]; if (f) readZip(f); });
+    setupPlatform();
     render();
     if (S.ghToken && S.ghUser) fillRepoList();
     if (S.domain && S.lastDeploy) checkStatus();

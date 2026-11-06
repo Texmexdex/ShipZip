@@ -8,7 +8,11 @@
 <meta name="theme-color" content="#0f172a">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icons/icon-192.png">
-<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="ShipZip">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <style>
   :root {
     --bg: #f4f5f7; --card: #ffffff; --text: #14171f; --muted: #636b7a; --line: #dfe2e8;
@@ -69,6 +73,12 @@
   p.warn { background: var(--warn-bg); color: var(--warn); }
   p.err { background: var(--err-bg); color: var(--err); }
   p.ok { background: var(--ok-bg); color: var(--ok); }
+  #install { border-color: var(--accent); }
+  #install[hidden] { display: none; }
+  ol.steps { padding-left: 22px; margin: 4px 0 8px; font-size: 15px; }
+  ol.steps li { margin: 6px 0; }
+  .ico { display: inline-grid; place-items: center; width: 20px; height: 20px; line-height: 1; border: 1.5px solid var(--accent); color: var(--accent); border-radius: 5px; font-size: 11px; vertical-align: -3px; }
+  #install-skip { width: 100%; margin-top: 4px; }
   #setup-done { display: none; }
   body.setup-collapsed #setup-done { display: block; }
   body.setup-collapsed #step-gh, body.setup-collapsed #step-site { display: none; }
@@ -96,8 +106,8 @@
   #log { list-style: none; padding: 0; margin: 0; font: 12px/1.6 ui-monospace, Menlo, Consolas, monospace; max-height: 260px; overflow: auto; overflow-wrap: anywhere; }
   #log li.ok { color: var(--ok); } #log li.err { color: var(--err); } #log li.warn { color: var(--warn); }
   #toast { position: fixed; left: 16px; right: 16px; bottom: calc(16px + env(safe-area-inset-bottom)); max-width: 528px; margin: 0 auto; background: var(--text); color: var(--bg);
-    padding: 12px 14px; border-radius: 10px; font-size: 14px; transform: translateY(150%); transition: transform .2s; z-index: 10; }
-  #toast.show { transform: none; }
+    padding: 12px 14px; border-radius: 10px; font-size: 14px; transform: translateY(calc(100% + 48px)); visibility: hidden; transition: transform .2s, visibility .2s; z-index: 10; }
+  #toast.show { transform: none; visibility: visible; }
   #toast.err { background: var(--err); color: #fff; }
   #toast.ok { background: var(--ok); color: #04110a; }
   a { color: var(--accent); }
@@ -113,6 +123,17 @@
       <p>Zip in, website out.</p>
     </div>
   </header>
+
+  <section id="install" hidden>
+    <h2>Add ShipZip to your Home Screen first</h2>
+    <ol class="steps">
+      <li>Tap the <strong>Share</strong> button <span class="ico" aria-hidden="true">⬆︎</span> in Safari's toolbar.</li>
+      <li>Scroll down and tap <strong>Add to Home Screen</strong>, then <strong>Add</strong>.</li>
+      <li>Open <strong>ShipZip</strong> from the Home Screen and do the setup there.</li>
+    </ol>
+    <p class="muted">The Home Screen app keeps its own saved keys, separate from Safari, so anything typed in here won't carry over.</p>
+    <button id="install-skip" type="button">Continue in Safari anyway</button>
+  </section>
 
   <section id="setup-done">
     <h2>Setup <button id="setup-edit" type="button" class="copy" style="margin-left:auto">Edit</button></h2>
@@ -172,7 +193,7 @@
       Choose the website .zip
       <input id="zip" type="file" accept=".zip,application/zip,application/x-zip-compressed">
     </label>
-    <p class="muted">Tip: install ShipZip to the home screen, then use <strong>Share → ShipZip</strong> on any zip.</p>
+    <p id="zip-tip" class="muted"></p>
     <div id="report"></div>
     <progress id="progress" hidden></progress>
     <button id="deploy-btn" class="primary" type="button" disabled>Deploy</button>
